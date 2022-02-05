@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  # Test with Tox, a recent Python version and libraries from PyPI
+  test_tox:
+    name: Test with Tox
+    runs-on: ubuntu-latest
+    container: python:3.10-bullseye
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup dependencies
+        run: |
+          pip install tox
+          # Make sure we have our dependencies, which are not required for Tox but for `make build`
+          pip install -e .
+      - run: make build
+      - run: tox -e py310
+      - name: Publish unit test results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: .tox/py*/log/test-results/pytest/results.xml
+          comment_mode: "off"
+      - name: Archive unit test results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-results
+          path: .tox/py*/log/test-results
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: code-coverage-report
+          path: .tox/py*/htmlcov

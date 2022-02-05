@@ -212,10 +212,12 @@ class IntegrationTest(DatabaseTestCase):
         monotonic_mock.return_value = 190
         self.assertFalse(master_loop.step())
         # Poll whether the process has been killed
-        for _ in range(100):
+        for _ in range(300):
             try:
                 os.kill(checkerscript_pid, 0)
             except ProcessLookupError:
+                import sys
+                print('XXX got ProcessLookupError', file=sys.stderr)
                 break
             time.sleep(0.1)
         with self.assertRaises(ProcessLookupError):
